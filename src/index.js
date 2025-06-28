@@ -59,18 +59,25 @@ function parseGitHubUrl(url) {
  * @returns {Promise<string>} - Command output
  */
 async function executeCommand(command, cwd = process.cwd()) {
-  try {
-    const { stdout, stderr } = await execAsync(command, { cwd });
-    if (stdout && stdout.trim()) {
-      console.log(stdout.trim());
-    }
-    if (stderr && stderr.trim()) {
-      console.log(stderr.trim());
-    }
-    return stdout;
-  } catch (error) {
-    throw new Error(`Command failed: ${command}\n${error.message}`);
-  }
+  return new Promise((resolve, reject) => {
+    const child = exec(command, { cwd }, (error, stdout, stderr) => {
+      if (error) {
+        reject(new Error(`Command failed: ${command}\n${error.message}`));
+        return;
+      }
+      resolve(stdout);
+    });
+
+    // Real-time output of stdout
+    child.stdout.on('data', (data) => {
+      process.stdout.write(data);
+    });
+
+    // Real-time output of stderr
+    child.stderr.on('data', (data) => {
+      process.stderr.write(data);
+    });
+  });
 }
 
 /**
@@ -107,16 +114,17 @@ async function removeDirectory(dirPath) {
 async function gitik(url, options = {}) {
   const { owner, repo, branch, subPath, gitUrl, repoName } = parseGitHubUrl(url);
 
-  console.log(`Repository: ${owner}/${repo}`);
-  if (branch) {
-    console.log(`Branch: ${branch}`);
-  }
-  if (subPath) {
-    console.log(`Path: ${subPath}`);
-  }
-
   // Determine output directory
   const outputDir = options.output || (subPath ? path.basename(subPath) : repoName);
+
+  // Use ANSI escape codes for color: cyan for repo, orange for branch, green for path
+  // Orange: \x1b[38;5;208m (256-color), Cyan: \x1b[36m, Green: \x1b[32m, Dim: \x1b[2m, Reset: \x1b[0m
+  // Light blue: \x1b[94m
+  let info = `\x1b[2mrepo:\x1b[0m\x1b[94m${owner}/${repo}\x1b[0m`;
+  if (branch) info += ` \x1b[2mbranch:\x1b[0m\x1b[38;5;208m${branch}\x1b[0m`;
+  if (subPath) info += ` \x1b[2mpath:\x1b[0m\x1b[32m${subPath}\x1b[0m`;
+  info += ` -> \x1b[36m./${outputDir}\x1b[0m`;
+  console.log(info);
 
   // Check if output directory already exists
   if (await directoryExists(outputDir)) {
@@ -125,7 +133,7 @@ async function gitik(url, options = {}) {
 
   try {
     // Step 1: Clone with sparse-checkout
-    console.log('Cloning with sparse-checkout...');
+    // console.log('Cloning with sparse-checkout...');
     const branchParam = branch ? ` -b "${branch}"` : '';
     await executeCommand(`git clone --depth=1 --filter=blob:none --sparse --single-branch --no-tags${branchParam} "${gitUrl}" "${outputDir}"`);
 
@@ -145,7 +153,7 @@ async function gitik(url, options = {}) {
       const subDirPath = path.join(outputDir, subPath);
 
       if (await directoryExists(subDirPath)) {
-        console.log('Extracting subdirectory...');
+        // console.log('Extracting subdirectory...');
 
         // Create a temporary directory name
         const tempDir = `${outputDir}_temp_${Date.now()}`;
