@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-const { program } = require('commander');
-const gitik = require('../src/index.js');
+import { program } from 'commander';
+import gitik from '../src/index.js';
 
 program
   .name('gitik')

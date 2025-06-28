@@ -1,7 +1,7 @@
-const { exec } = require('child_process');
-const { promisify } = require('util');
-const path = require('path');
-const fs = require('fs').promises;
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import path from 'path';
+import fs from 'fs/promises';
 
 const execAsync = promisify(exec);
 
@@ -11,13 +11,29 @@ const execAsync = promisify(exec);
  * @returns {object} - Parsed repository information
  */
 function parseGitHubUrl(url) {
+  // Handle null and undefined inputs
+  if (!url || typeof url !== 'string') {
+    throw new Error('Invalid GitHub URL format. Expected: https://github.com/owner/repo or https://github.com/owner/repo/tree/branch/path');
+  }
+
   // Remove trailing slash and normalize URL
-  url = url.replace(/\/$/, '');
+  url = url.trim().replace(/\/$/, '');
 
-  // Match GitHub URL patterns
-  const repoMatch = url.match(/https:\/\/github\.com\/([^\/]+)\/([^\/]+)(?:\/tree\/([^\/]+)\/(.+))?/);
+  // Check for query parameters or fragments which are not supported
+  if (url.includes('?') || url.includes('#')) {
+    throw new Error('Invalid GitHub URL format. URLs with query parameters or fragments are not supported');
+  }
 
-  if (!repoMatch) {
+  // Match GitHub URL patterns - only accept basic repo URLs or tree URLs
+  const basicRepoMatch = url.match(/^https:\/\/github\.com\/([^\/]+)\/([^\/]+)(?:\.git)?$/);
+  const treeRepoMatch = url.match(/^https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/tree\/([^\/]+)\/(.+)$/);
+  
+  let repoMatch;
+  if (basicRepoMatch) {
+    repoMatch = [basicRepoMatch[0], basicRepoMatch[1], basicRepoMatch[2], null, ''];
+  } else if (treeRepoMatch) {
+    repoMatch = [treeRepoMatch[0], treeRepoMatch[1], treeRepoMatch[2], treeRepoMatch[3], treeRepoMatch[4]];
+  } else {
     throw new Error('Invalid GitHub URL format. Expected: https://github.com/owner/repo or https://github.com/owner/repo/tree/branch/path');
   }
 
@@ -191,4 +207,4 @@ async function gitik(url, options = {}) {
   }
 }
 
-module.exports = gitik;
+export default gitik;
