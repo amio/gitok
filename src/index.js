@@ -126,10 +126,13 @@ async function gitik(url, options = {}) {
   try {
     // Step 1: Clone with sparse-checkout
     console.log('Cloning with sparse-checkout...');
-    await executeCommand(`git clone --depth=1 --filter=blob:none --sparse --single-branch --no-tags "${gitUrl}" "${outputDir}"`);
+    const branchParam = branch ? ` -b "${branch}"` : '';
+    await executeCommand(`git clone --depth=1 --filter=blob:none --sparse --single-branch --no-tags${branchParam} "${gitUrl}" "${outputDir}"`);
 
-    // Step 2: Configure sparse-checkout if subPath is specified
-    if (subPath) {
+    // Step 2: If subPath is not specified, retrieve all files; otherwise, set up sparse-checkout for the specified subPath
+    if (!subPath) {
+      await executeCommand('git sparse-checkout disable', outputDir);
+    } else {
       console.log('Configuring sparse-checkout...');
 
       // Initialize sparse-checkout
@@ -157,21 +160,9 @@ async function gitik(url, options = {}) {
         // Remove the temporary directory (includes .git cleanup)
         await removeDirectory(tempDir);
       }
-    } else {
-      // If no subPath, get all files
-      await executeCommand('git sparse-checkout disable', outputDir);
     }
 
-    // Step 3: Ensure we're on the correct branch
-    if (branch) {
-      try {
-        await executeCommand(`git checkout ${branch}`, outputDir);
-      } catch (error) {
-        console.warn(`Warning: Could not switch to branch '${branch}', staying on default branch`);
-      }
-    }
-
-    // Step 4: Clean up .git directory
+    // Step 3: Clean up .git directory
     const gitDir = path.join(outputDir, '.git');
     if (await directoryExists(gitDir)) {
       await removeDirectory(gitDir);
