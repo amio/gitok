@@ -1,0 +1,29 @@
+{
+  "name": "gitik",
+  "version": "1.0.0",
+  "description": "A CLI tool to quickly clone specific parts of git repositories",
+  "main": "src/index.js",
+  "bin": {
+    "gitik": "./bin/gitik.js"
+  },
+  "scripts": {
+    "start": "node bin/gitik.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "git",
+    "clone",
+    "sparse-checkout",
+    "cli",
+    "tool"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^11.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "preferGlobal": true
+}
