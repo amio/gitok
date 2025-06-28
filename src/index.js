@@ -140,43 +140,22 @@ async function gitik(url, options = {}) {
 
       // Check if we should move contents up (when cloning subdirectory only)
       const subDirPath = path.join(outputDir, subPath);
+
       if (await directoryExists(subDirPath)) {
         console.log('Extracting subdirectory...');
 
-        // Get list of files in subdirectory
-        const subDirContents = await fs.readdir(subDirPath);
+        // Create a temporary directory name
+        const tempDir = `${outputDir}_temp_${Date.now()}`;
 
-        // Clean up any root files before moving subdirectory contents
-        const rootContents = await fs.readdir(outputDir);
-        for (const item of rootContents) {
-          const itemPath = path.join(outputDir, item);
-          const stat = await fs.stat(itemPath);
+        // Rename current output directory to temporary name
+        await fs.rename(outputDir, tempDir);
 
-          // Remove root-level files that are not directories (i.e., files)
-          if (stat.isFile()) {
-            await fs.unlink(itemPath);
-          }
-        }
+        // Move the subdirectory to the original output location
+        const tempSubDirPath = path.join(tempDir, subPath);
+        await fs.rename(tempSubDirPath, outputDir);
 
-        // Move each item from subdirectory to parent
-        for (const item of subDirContents) {
-          const sourcePath = path.join(subDirPath, item);
-          const targetPath = path.join(outputDir, item);
-          await fs.rename(sourcePath, targetPath);
-        }
-
-        // Remove empty subdirectory structure
-        const pathParts = subPath.split('/');
-        let currentPath = outputDir;
-        for (const part of pathParts) {
-          currentPath = path.join(currentPath, part);
-          try {
-            await fs.rmdir(currentPath);
-          } catch {
-            // Directory not empty or doesn't exist, continue
-            break;
-          }
-        }
+        // Remove the temporary directory (includes .git cleanup)
+        await removeDirectory(tempDir);
       }
     } else {
       // If no subPath, get all files
@@ -194,7 +173,9 @@ async function gitik(url, options = {}) {
 
     // Step 4: Clean up .git directory
     const gitDir = path.join(outputDir, '.git');
-    await removeDirectory(gitDir);
+    if (await directoryExists(gitDir)) {
+      await removeDirectory(gitDir);
+    }
 
     console.log(`Done: ${path.resolve(outputDir)}`);
 
