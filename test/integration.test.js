@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import gitik from '../src/index.js';
+import gitok from '../src/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -32,7 +32,7 @@ test('Integration Tests', async (t) => {
   await t.test('should successfully clone awesome media subdirectory', async () => {
     const url = 'https://github.com/sindresorhus/awesome/tree/main/media';
 
-    await gitik(url);
+    await gitok(url);
 
     const outputDir = 'media';
     const stat = await fs.stat(outputDir);
@@ -50,7 +50,7 @@ test('Integration Tests', async (t) => {
     const url = 'https://github.com/sindresorhus/awesome/tree/main/media';
     const customOutput = 'my-media';
 
-    await gitik(url, { output: customOutput });
+    await gitok(url, { output: customOutput });
 
     const stat = await fs.stat(customOutput);
     assert.ok(stat.isDirectory(), 'Custom output directory should be created');
@@ -64,7 +64,7 @@ test('Integration Tests', async (t) => {
     await fs.mkdir(conflictDir);
 
     await assert.rejects(
-      gitik('https://github.com/owner/test-repo'),
+      gitok('https://github.com/owner/test-repo'),
       /Directory 'test-repo' already exists/
     );
   });

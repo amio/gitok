@@ -1,14 +1,14 @@
 {
-  "name": "gitik",
+  "name": "gitok",
   "version": "1.0.0",
   "description": "A CLI tool to quickly clone specific parts of git repositories",
   "main": "src/index.js",
   "type": "module",
   "bin": {
-    "gitik": "./bin/gitik.js"
+    "gitok": "./bin/gitok.js"
   },
   "scripts": {
-    "start": "node bin/gitik.js",
+    "start": "node bin/gitok.js",
     "test": "node --test test/*.test.js",
     "test:watch": "node --test --watch test/*.test.js",
     "test:verbose": "node --test --reporter=spec test/*.test.js",

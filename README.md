@@ -1,28 +1,16 @@
-# Gitik
+# Gitok - Git Take Out
 
 🚀 A fast CLI tool to clone specific parts of Git repositories using sparse-checkout.
 
-## Features
-
-- **Fast partial cloning** - Only downloads the files you need
-- **Supports subdirectories** - Clone specific folders from repositories
-- **Automatic cleanup** - Removes `.git` directory after cloning
-- **Smart defaults** - Automatically detects repository and folder names
-- **Branch support** - Works with any branch or tag
-
 ## Installation
 
-### Global Installation (Recommended)
+Install Gitok globally or use it with `npx`
 
 ```bash
-npm install -g gitik
-```
-
-### Local Installation
-
-```bash
-npm install gitik
-npx gitik <url>
+# Use npx to run without installing globally
+npx gitok <url>
+# Install globally to use `gitok` command anywhere
+npm install -g gitok
 ```
 
 ## Usage
@@ -31,24 +19,20 @@ npx gitik <url>
 
 ```bash
 # Clone entire repository
-gitik https://github.com/owner/repo
-```
+gitok https://github.com/owner/repo
 
-### Clone Specific Folder
-
-```bash
 # Clone specific folder from main branch
-gitik https://github.com/owner/repo/tree/main/path/to/folder
+gitok https://github.com/owner/repo/tree/main/path/to/folder
 
 # Clone specific folder from different branch
-gitik https://github.com/owner/repo/tree/develop/src/components
+gitok https://github.com/owner/repo/tree/develop/src/components
 ```
 
 ### Custom Output Directory
 
 ```bash
 # Specify custom output directory name
-gitik https://github.com/owner/repo/tree/main/examples -o my-examples
+gitok https://github.com/owner/repo/tree/main/examples -o my-examples
 ```
 
 ## Command Line Options
@@ -61,13 +45,13 @@ gitik https://github.com/owner/repo/tree/main/examples -o my-examples
 
 ```bash
 # Clone React examples from a repository
-gitik https://github.com/facebook/react/tree/main/packages/react-dom
+gitok https://github.com/facebook/react/tree/main/packages/react-dom
 
 # Clone specific documentation folder
-gitik https://github.com/microsoft/TypeScript/tree/main/doc
+gitok https://github.com/microsoft/TypeScript/tree/main/doc
 
 # Clone with custom directory name
-gitik https://github.com/vercel/next.js/tree/canary/examples/api-routes -o nextjs-api-example
+gitok https://github.com/vercel/next.js/tree/canary/examples/api-routes -o nextjs-api-example
 ```
 
 ## How It Works
@@ -81,44 +65,3 @@ gitik https://github.com/vercel/next.js/tree/canary/examples/api-routes -o nextj
 
 - `https://github.com/owner/repo` - Clone entire repository
 - `https://github.com/owner/repo/tree/branch/path/to/folder` - Clone specific folder from specific branch
-
-## Requirements
-
-- Node.js >= 14.0.0
-- Git installed and available in PATH
-
-## Error Handling
-
-The tool includes comprehensive error handling for:
-- Invalid URL formats
-- Network connectivity issues
-- Git command failures
-- File system permissions
-- Existing directory conflicts
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-MIT License - see LICENSE file for details
-
-## Why Gitik?
-
-Traditional `git clone` downloads the entire repository history and all files, which can be slow and wasteful when you only need specific parts. Gitik uses Git's sparse-checkout feature to:
-
-- **Save bandwidth** - Only downloads necessary files
-- **Save time** - Faster than full repository clones
-- **Save space** - No `.git` history taking up disk space
-- **Stay organized** - Clean directory structure without Git metadata
-
-Perfect for:
-- Downloading example projects
-- Getting specific components or utilities
-- Bootstrapping projects with templates
-- Extracting documentation or specific folders

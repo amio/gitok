@@ -107,11 +107,11 @@ async function removeDirectory(dirPath) {
 }
 
 /**
- * Main gitik function
+ * Main gitok function
  * @param {string} url - GitHub URL
  * @param {object} options - CLI options
  */
-async function gitik(url, options = {}) {
+async function gitok(url, options = {}) {
   const { owner, repo, branch, subPath, gitUrl, repoName } = parseGitHubUrl(url);
 
   // Determine output directory
@@ -187,4 +187,4 @@ async function gitik(url, options = {}) {
   }
 }
 
-export default gitik;
+export default gitok;

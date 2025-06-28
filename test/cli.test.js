@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 
 function runCLI(args) {
   return new Promise((resolve, reject) => {
-    const child = spawn('node', [path.join(__dirname, '../bin/gitik.js'), ...args]);
+    const child = spawn('node', [path.join(__dirname, '../bin/gitok.js'), ...args]);
     let stdout = '';
     let stderr = '';
 
@@ -29,7 +29,7 @@ test('CLI Tests', async (t) => {
   await t.test('should display help when run with --help', async () => {
     const result = await runCLI(['--help']);
     assert.strictEqual(result.code, 0);
-    assert.ok(result.stdout.includes('gitik'));
+    assert.ok(result.stdout.includes('gitok'));
     assert.ok(result.stdout.includes('Usage:'));
   });
 
