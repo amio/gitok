@@ -27,7 +27,7 @@ function parseGitHubUrl(url) {
   // Match GitHub URL patterns - only accept basic repo URLs or tree URLs
   const basicRepoMatch = url.match(/^https:\/\/github\.com\/([^\/]+)\/([^\/]+)(?:\.git)?$/);
   const treeRepoMatch = url.match(/^https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/tree\/([^\/]+)\/(.+)$/);
-  
+
   let repoMatch;
   if (basicRepoMatch) {
     repoMatch = [basicRepoMatch[0], basicRepoMatch[1], basicRepoMatch[2], null, ''];
@@ -125,8 +125,8 @@ async function gitik(url, options = {}) {
 
   try {
     // Step 1: Clone with sparse-checkout
-    console.log('Cloning...');
-    await executeCommand(`git clone --depth=1 --filter=blob:none --sparse "${gitUrl}" "${outputDir}"`);
+    console.log('Cloning with sparse-checkout...');
+    await executeCommand(`git clone --depth=1 --filter=blob:none --sparse --single-branch --no-tags "${gitUrl}" "${outputDir}"`);
 
     // Step 2: Configure sparse-checkout if subPath is specified
     if (subPath) {
@@ -146,6 +146,18 @@ async function gitik(url, options = {}) {
         // Get list of files in subdirectory
         const subDirContents = await fs.readdir(subDirPath);
 
+        // Clean up any root files before moving subdirectory contents
+        const rootContents = await fs.readdir(outputDir);
+        for (const item of rootContents) {
+          const itemPath = path.join(outputDir, item);
+          const stat = await fs.stat(itemPath);
+
+          // Remove root-level files that are not directories (i.e., files)
+          if (stat.isFile()) {
+            await fs.unlink(itemPath);
+          }
+        }
+
         // Move each item from subdirectory to parent
         for (const item of subDirContents) {
           const sourcePath = path.join(subDirPath, item);
@@ -163,18 +175,6 @@ async function gitik(url, options = {}) {
           } catch {
             // Directory not empty or doesn't exist, continue
             break;
-          }
-        }
-
-        // Clean up any remaining root files that aren't part of the subdirectory
-        const rootContents = await fs.readdir(outputDir);
-        for (const item of rootContents) {
-          const itemPath = path.join(outputDir, item);
-          const stat = await fs.stat(itemPath);
-
-          // Remove root-level files that are not from our target subdirectory
-          if (stat.isFile() && !subDirContents.includes(item)) {
-            await fs.unlink(itemPath);
           }
         }
       }
