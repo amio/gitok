@@ -6,14 +6,15 @@ import fs from 'fs/promises';
 const execAsync = promisify(exec);
 
 /**
- * Parse GitHub URL to extract repository info and subdirectory
- * @param {string} url - GitHub URL
+ * Parse Git repository URL to extract repository info and subdirectory
+ * Supports GitHub and GitLab URLs
+ * @param {string} url - Git repository URL
  * @returns {object} - Parsed repository information
  */
-function parseGitHubUrl(url) {
+function parseGitUrl(url) {
   // Handle null and undefined inputs
   if (!url || typeof url !== 'string') {
-    throw new Error('Invalid GitHub URL format. Expected: https://github.com/owner/repo or https://github.com/owner/repo/tree/branch/path');
+    throw new Error('Invalid Git URL format. Expected: https://github.com/owner/repo, https://gitlab.com/owner/repo, or tree/blob URLs');
   }
 
   // Remove trailing slash and normalize URL
@@ -21,33 +22,51 @@ function parseGitHubUrl(url) {
 
   // Check for query parameters or fragments which are not supported
   if (url.includes('?') || url.includes('#')) {
-    throw new Error('Invalid GitHub URL format. URLs with query parameters or fragments are not supported');
+    throw new Error('Invalid Git URL format. URLs with query parameters or fragments are not supported');
   }
 
-  // Match GitHub URL patterns - only accept basic repo URLs or tree URLs
-  const basicRepoMatch = url.match(/^https:\/\/github\.com\/([^\/]+)\/([^\/]+)(?:\.git)?$/);
-  const treeRepoMatch = url.match(/^https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/tree\/([^\/]+)\/(.+)$/);
+  // Detect platform and parse accordingly
+  let platform, host, owner, repo, branch, subPath;
+  
+  // GitHub URL patterns
+  const githubBasicMatch = url.match(/^https:\/\/github\.com\/([^\/]+)\/([^\/]+)(?:\.git)?$/);
+  const githubTreeMatch = url.match(/^https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/tree\/([^\/]+)\/(.+)$/);
+  
+  // GitLab URL patterns
+  const gitlabBasicMatch = url.match(/^https:\/\/gitlab\.com\/([^\/]+)\/([^\/]+)(?:\.git)?$/);
+  const gitlabTreeMatch = url.match(/^https:\/\/gitlab\.com\/([^\/]+)\/([^\/]+)\/-\/tree\/([^\/]+)\/(.+)$/);
 
-  let repoMatch;
-  if (basicRepoMatch) {
-    repoMatch = [basicRepoMatch[0], basicRepoMatch[1], basicRepoMatch[2], null, ''];
-  } else if (treeRepoMatch) {
-    repoMatch = [treeRepoMatch[0], treeRepoMatch[1], treeRepoMatch[2], treeRepoMatch[3], treeRepoMatch[4]];
+  if (githubBasicMatch) {
+    platform = 'github';
+    host = 'github.com';
+    [, owner, repo, branch, subPath] = [githubBasicMatch[0], githubBasicMatch[1], githubBasicMatch[2], null, ''];
+  } else if (githubTreeMatch) {
+    platform = 'github';
+    host = 'github.com';
+    [, owner, repo, branch, subPath] = [githubTreeMatch[0], githubTreeMatch[1], githubTreeMatch[2], githubTreeMatch[3], githubTreeMatch[4]];
+  } else if (gitlabBasicMatch) {
+    platform = 'gitlab';
+    host = 'gitlab.com';
+    [, owner, repo, branch, subPath] = [gitlabBasicMatch[0], gitlabBasicMatch[1], gitlabBasicMatch[2], null, ''];
+  } else if (gitlabTreeMatch) {
+    platform = 'gitlab';
+    host = 'gitlab.com';
+    [, owner, repo, branch, subPath] = [gitlabTreeMatch[0], gitlabTreeMatch[1], gitlabTreeMatch[2], gitlabTreeMatch[3], gitlabTreeMatch[4]];
   } else {
-    throw new Error('Invalid GitHub URL format. Expected: https://github.com/owner/repo or https://github.com/owner/repo/tree/branch/path');
+    throw new Error('Invalid Git URL format. Expected: https://github.com/owner/repo, https://gitlab.com/owner/repo, or their respective tree/blob URLs');
   }
-
-  const [, owner, repo, branch, subPath] = repoMatch;
 
   // Remove .git suffix if present
   const repoName = repo.replace(/\.git$/, '');
 
   return {
+    platform,
+    host,
     owner,
     repo: repoName,
     branch: branch || null,
     subPath: subPath || '',
-    gitUrl: `https://github.com/${owner}/${repoName}.git`,
+    gitUrl: `https://${host}/${owner}/${repoName}.git`,
     repoName
   };
 }
@@ -112,7 +131,7 @@ async function removeDirectory(dirPath) {
  * @param {object} options - CLI options
  */
 async function gitok(url, options = {}) {
-  const { owner, repo, branch, subPath, gitUrl, repoName } = parseGitHubUrl(url);
+  const { platform, host, owner, repo, branch, subPath, gitUrl, repoName } = parseGitUrl(url);
 
   // Determine output directory
   const outputDir = options.output || (subPath ? path.basename(subPath) : repoName);

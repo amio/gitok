@@ -59,6 +59,23 @@ test('Integration Tests', async (t) => {
     assert.ok(files.length > 0, 'Custom directory should contain files');
   });
 
+  await t.test('should successfully clone GitLab changelogs subdirectory', async () => {
+    const url = 'https://gitlab.com/gitlab-org/gitlab/-/tree/master/changelogs';
+
+    await gitok(url);
+
+    const outputDir = 'changelogs';
+    const stat = await fs.stat(outputDir);
+    assert.ok(stat.isDirectory(), 'changelogs directory should be created');
+
+    const files = await fs.readdir(outputDir);
+    assert.ok(files.length > 0, 'changelogs directory should contain files');
+
+    // Verify .git directory was removed
+    const gitDir = path.join(outputDir, '.git');
+    await assert.rejects(fs.stat(gitDir), { code: 'ENOENT' });
+  });
+
   await t.test('should reject when output directory already exists', async () => {
     const conflictDir = 'test-repo';
     await fs.mkdir(conflictDir);

@@ -1,7 +1,7 @@
 {
   "name": "gitok",
   "version": "1.0.0",
-  "description": "A CLI tool to quickly clone specific parts of git repositories",
+  "description": "A CLI tool to quickly clone specific parts of git repositories (supports GitHub and GitLab)",
   "main": "src/index.js",
   "type": "module",
   "bin": {

@@ -45,9 +45,9 @@ test('CLI Tests', async (t) => {
     assert.ok(result.stderr.includes('error') || result.stdout.includes('required'));
   });
 
-  await t.test('should show error for invalid GitHub URL', async () => {
-    const result = await runCLI(['https://gitlab.com/owner/repo']);
+  await t.test('should show error for invalid Git URL', async () => {
+    const result = await runCLI(['https://bitbucket.org/owner/repo']);
     assert.notStrictEqual(result.code, 0);
-    assert.ok(result.stderr.includes('Invalid GitHub URL format'));
+    assert.ok(result.stderr.includes('Invalid Git URL format'));
   });
 });

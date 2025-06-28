@@ -7,7 +7,7 @@ program
   .name('gitok')
   .description('A CLI tool to quickly clone specific parts of git repositories')
   .version('1.0.0')
-  .argument('<url>', 'GitHub repository URL (supports both repo root and specific folder paths)')
+  .argument('<url>', 'Git repository URL (supports GitHub and GitLab, both repo root and specific folder paths)')
   .option('-o, --output <dir>', 'Output directory name (default: repository name)')
   .action(async (url, options) => {
     try {
