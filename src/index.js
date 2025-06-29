@@ -1,6 +1,6 @@
-import path from 'path';
-import fs from 'fs/promises';
-import { dim, blue, cyan, green, yellow } from 'colorette';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { blue, cyan, yellow } from 'colorette';
 
 /**
  * Parse Git repository URL to extract repository info and subdirectory
@@ -26,12 +26,12 @@ function parseGitUrl(url) {
   let platform, host, owner, repo, branch, subPath;
 
   // GitHub URL patterns
-  const githubBasicMatch = url.match(/^https:\/\/github\.com\/([^\/]+)\/([^\/]+)(?:\.git)?$/);
-  const githubTreeMatch = url.match(/^https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/tree\/([^\/]+)\/(.+)$/);
+  const githubBasicMatch = url.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)(?:\.git)?$/);
+  const githubTreeMatch = url.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/tree\/([^/]+)\/(.+)$/);
 
   // GitLab URL patterns
-  const gitlabBasicMatch = url.match(/^https:\/\/gitlab\.com\/([^\/]+)\/([^\/]+)(?:\.git)?$/);
-  const gitlabTreeMatch = url.match(/^https:\/\/gitlab\.com\/([^\/]+)\/([^\/]+)\/-\/tree\/([^\/]+)\/(.+)$/);
+  const gitlabBasicMatch = url.match(/^https:\/\/gitlab\.com\/([^/]+)\/([^/]+)(?:\.git)?$/);
+  const gitlabTreeMatch = url.match(/^https:\/\/gitlab\.com\/([^/]+)\/([^/]+)\/-\/tree\/([^/]+)\/(.+)$/);
 
   if (githubBasicMatch) {
     platform = 'github';
@@ -78,78 +78,73 @@ function parseGitUrl(url) {
  * @returns {Promise<string>} - Command output
  */
 async function executeCommand(command, options = {}) {
-  return new Promise(async (resolve, reject) => {
-    const { cwd = process.cwd(), outputTransform, showOnlyLastLine = false } = options;
+  const { cwd = process.cwd(), outputTransform, showOnlyLastLine = false } = options;
 
-    try {
-      const pty = await import('node-pty');
+  const pty = await import('node-pty');
 
-      const ptyProcess = pty.spawn('sh', ['-c', command], {
-        name: 'xterm-color',
-        cols: process.stdout.columns || 80,
-        rows: process.stdout.rows || 24,
-        cwd: cwd,
-        env: {
-          ...process.env,
-          TERM: 'xterm-256color',
-          FORCE_COLOR: '1'
-        }
-      });
-
-      let output = '';
-      let hasDisplayedLine = false;
-
-      ptyProcess.onData((data) => {
-        output += data;
-
-        if (showOnlyLastLine) {
-          // Handle logic for showing only the last line
-          const lines = data.split('\n').filter(line => line.trim() !== '');
-
-          if (lines.length > 0) {
-            // If we previously displayed a line, clear it first
-            if (hasDisplayedLine) {
-              process.stdout.write('\r\x1b[2K'); // Return to line start and clear entire line
-            }
-
-            // Display the last line
-            const lastLine = lines[lines.length - 1];
-
-            // If line is too long, truncate it for display
-            const maxWidth = (process.stdout.columns || 80) - 3; // Leave 3 characters margin
-            const displayLine = lastLine.length > maxWidth ?
-              lastLine.substring(0, maxWidth) + '...' : lastLine;
-
-            process.stdout.write(displayLine);
-            hasDisplayedLine = true;
-          }
-        } else {
-          // Original output processing logic
-          const processedData = outputTransform ? outputTransform(data) : data;
-
-          // Only output if the result is not null/undefined
-          if (processedData != null) {
-            process.stdout.write(processedData);
-          }
-        }
-      });
-
-      ptyProcess.onExit(({ exitCode, signal }) => {
-        // If using showOnlyLastLine mode, clear the displayed line when done
-        if (showOnlyLastLine && hasDisplayedLine) {
-          process.stdout.write('\r\x1b[2K'); // Clear current line
-        }
-
-        if (exitCode === 0) {
-          resolve(output);
-        } else {
-          reject(new Error(`Command failed: ${command}\nExit code: ${exitCode}\nSignal: ${signal}`));
-        }
-      });
-
-    } catch (error) {
-      reject(new Error(`node-pty is required but not available: ${error.message}`));
+  const ptyProcess = pty.spawn('sh', ['-c', command], {
+    name: 'xterm-color',
+    cols: process.stdout.columns || 80,
+    rows: process.stdout.rows || 24,
+    cwd: cwd,
+    env: {
+      ...process.env,
+      TERM: 'xterm-256color',
+      FORCE_COLOR: '1'
     }
+  });
+
+  let output = '';
+  let hasDisplayedLine = false;
+
+  ptyProcess.onData((data) => {
+    output += data;
+
+    if (showOnlyLastLine) {
+      // Handle logic for showing only the last line
+      const lines = data.split('\n').filter(line => line.trim() !== '');
+
+      if (lines.length > 0) {
+        // If we previously displayed a line, clear it first
+        if (hasDisplayedLine) {
+          process.stdout.write('\r\x1b[2K'); // Return to line start and clear entire line
+        }
+
+        // Display the last line
+        const lastLine = lines[lines.length - 1];
+
+        // If line is too long, truncate it for display
+        const maxWidth = (process.stdout.columns || 80) - 3; // Leave 3 characters margin
+        const displayLine = lastLine.length > maxWidth ?
+          lastLine.substring(0, maxWidth) + '...' : lastLine;
+
+        process.stdout.write(displayLine);
+        hasDisplayedLine = true;
+      }
+    } else {
+      // Original output processing logic
+      const processedData = outputTransform ? outputTransform(data) : data;
+
+      // Only output if the result is not null/undefined
+      if (processedData != null) {
+        process.stdout.write(processedData);
+      }
+    }
+  });
+
+  return new Promise((resolve, reject) => {
+    ptyProcess.onExit(({ exitCode, signal }) => {
+      // If using showOnlyLastLine mode, clear the displayed line when done
+      if (showOnlyLastLine && hasDisplayedLine) {
+        process.stdout.write('\r\x1b[2K'); // Clear current line
+      }
+
+      if (exitCode === 0) {
+        resolve(output);
+      } else {
+        reject(new Error(`Command failed: ${command}\nExit code: ${exitCode}\nSignal: ${signal}`));
+      }
+    });
   });
 }
 
@@ -186,7 +181,7 @@ async function removeDirectory(dirPath) {
  */
 async function gitok(url, options = {}) {
   const startTime = Date.now();
-  const { platform, host, owner, repo, branch, subPath, gitUrl, repoName } = parseGitUrl(url);
+  const { owner, repo, branch, subPath, gitUrl, repoName } = parseGitUrl(url);
 
   // Determine output directory
   const outputDir = options.output || (subPath ? path.basename(subPath) : repoName);
