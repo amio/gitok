@@ -74,11 +74,12 @@ function parseGitUrl(url) {
  * @param {object} options - Command execution options
  * @param {string} options.cwd - Working directory
  * @param {function} options.outputTransform - Function to transform/filter output data
+ * @param {boolean} options.showOnlyLastLine - Show only the last line of output, clear when done
  * @returns {Promise<string>} - Command output
  */
 async function executeCommand(command, options = {}) {
   return new Promise(async (resolve, reject) => {
-    const { cwd = process.cwd(), outputTransform } = options;
+    const { cwd = process.cwd(), outputTransform, showOnlyLastLine = false } = options;
 
     try {
       const pty = await import('node-pty');
@@ -96,20 +97,49 @@ async function executeCommand(command, options = {}) {
       });
 
       let output = '';
+      let hasDisplayedLine = false;
 
       ptyProcess.onData((data) => {
         output += data;
 
-        // If transform function is provided, process the data
-        const processedData = outputTransform ? outputTransform(data) : data;
+        if (showOnlyLastLine) {
+          // Handle logic for showing only the last line
+          const lines = data.split('\n').filter(line => line.trim() !== '');
 
-        // Only output if the result is not null/undefined
-        if (processedData != null) {
-          process.stdout.write(processedData);
+          if (lines.length > 0) {
+            // If we previously displayed a line, clear it first
+            if (hasDisplayedLine) {
+              process.stdout.write('\r\x1b[2K'); // Return to line start and clear entire line
+            }
+
+            // Display the last line
+            const lastLine = lines[lines.length - 1];
+
+            // If line is too long, truncate it for display
+            const maxWidth = (process.stdout.columns || 80) - 3; // Leave 3 characters margin
+            const displayLine = lastLine.length > maxWidth ?
+              lastLine.substring(0, maxWidth) + '...' : lastLine;
+
+            process.stdout.write(displayLine);
+            hasDisplayedLine = true;
+          }
+        } else {
+          // Original output processing logic
+          const processedData = outputTransform ? outputTransform(data) : data;
+
+          // Only output if the result is not null/undefined
+          if (processedData != null) {
+            process.stdout.write(processedData);
+          }
         }
       });
 
       ptyProcess.onExit(({ exitCode, signal }) => {
+        // If using showOnlyLastLine mode, clear the displayed line when done
+        if (showOnlyLastLine && hasDisplayedLine) {
+          process.stdout.write('\r\x1b[2K'); // Clear current line
+        }
+
         if (exitCode === 0) {
           resolve(output);
         } else {
@@ -173,25 +203,19 @@ async function gitok(url, options = {}) {
     throw new Error(`Directory '${outputDir}' already exists. Please choose a different output directory or remove the existing one.`);
   }
 
-  const outputTransform = (data) => {
-    // Filter out lines starting with "remote: "
-    return data.split('\n').filter(line => !line.startsWith('remote: ')).join('\n');
-  }
-
   try {
     // Step 1: Clone with sparse-checkout
     const branchParam = branch ? ` -b "${branch}"` : '';
     const cloneCommand = `git clone --depth=1 --filter=blob:none --sparse --single-branch --no-tags ${branchParam} "${gitUrl}" "${outputDir}"`;
-    await executeCommand(cloneCommand, { outputTransform });
+    await executeCommand(cloneCommand, { showOnlyLastLine: true });
 
     // Step 2: If subPath is not specified, retrieve all files; otherwise, set up sparse-checkout for the specified subPath
     if (!subPath) {
       await executeCommand('git sparse-checkout disable', { cwd: outputDir });
     } else {
-      console.log('Configuring sparse-checkout...');
-
+      // console.log('Configuring sparse-checkout...');
       await executeCommand('git sparse-checkout init --cone', { cwd: outputDir });
-      await executeCommand(`git sparse-checkout set "${subPath}"`, { cwd: outputDir, outputTransform });
+      await executeCommand(`git sparse-checkout set "${subPath}"`, { cwd: outputDir, showOnlyLastLine: true });
 
       // Check if we should move contents up (when cloning subdirectory only)
       const subDirPath = path.join(outputDir, subPath);
