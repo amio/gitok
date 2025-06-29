@@ -21,6 +21,18 @@ program
   .description('A CLI tool to quickly clone specific parts of git repositories')
   .version(packageJson.version);
 
+program.addHelpText('after', `
+Examples:
+  # Clone the entire repository
+  $ gitok https://github.com/user/repo
+
+  # Clone only a subdirectory from GitHub
+  $ gitok https://github.com/user/repo/tree/main/path/to/subdir
+
+  # Clone only a subdirectory from GitLab
+  $ gitok https://gitlab.com/group/project/-/tree/master/path/to/subdir
+`);
+
 program
   .argument('<url>', 'Git repository URL (GitHub or GitLab)')
   .argument('[output]', 'Output directory name (optional)')
@@ -36,5 +48,9 @@ program
       process.exit(1);
     }
   });
+
+if (process.argv.length <= 2) {
+  program.help({ error: false });
+}
 
 program.parse();
