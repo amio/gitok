@@ -27,8 +27,7 @@ program
   .option('-b, --branch <branch>', 'Branch to clone from')
   .action(async (url, output, options) => {
     try {
-      const result = await gitok(url, output, options.branch);
-      console.log(`Done: ${result}`);
+      await gitok(url, output, options.branch);
     } catch (error) {
       console.error('Error:', error.message);
       process.exit(1);

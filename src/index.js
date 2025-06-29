@@ -74,11 +74,15 @@ function parseGitUrl(url) {
 /**
  * Execute shell command with TTY support for progress display
  * @param {string} command - Command to execute
- * @param {string} cwd - Working directory
+ * @param {object} options - Command execution options
+ * @param {string} options.cwd - Working directory
+ * @param {function} options.outputTransform - Function to transform/filter output data
  * @returns {Promise<string>} - Command output
  */
-async function executeCommand(command, cwd = process.cwd()) {
+async function executeCommand(command, options = {}) {
   return new Promise(async (resolve, reject) => {
+    const { cwd = process.cwd(), outputTransform } = options;
+
     try {
       const pty = await import('node-pty');
 
@@ -98,7 +102,14 @@ async function executeCommand(command, cwd = process.cwd()) {
 
       ptyProcess.onData((data) => {
         output += data;
-        process.stdout.write(data);
+
+        // If transform function is provided, process the data
+        const processedData = outputTransform ? outputTransform(data) : data;
+
+        // Only output if the result is not null/undefined
+        if (processedData != null) {
+          process.stdout.write(processedData);
+        }
       });
 
       ptyProcess.onExit(({ exitCode, signal }) => {
@@ -166,23 +177,25 @@ async function gitok(url, options = {}) {
     throw new Error(`Directory '${outputDir}' already exists. Please choose a different output directory or remove the existing one.`);
   }
 
+  const outputTransform = (data) => {
+    // Filter out lines starting with "remote: "
+    return data.split('\n').filter(line => !line.startsWith('remote: ')).join('\n');
+  }
+
   try {
     // Step 1: Clone with sparse-checkout
-    // console.log('Cloning with sparse-checkout...');
     const branchParam = branch ? ` -b "${branch}"` : '';
-    await executeCommand(`git clone --depth=1 --filter=blob:none --sparse --single-branch --no-tags ${branchParam} "${gitUrl}" "${outputDir}"`);
+    const cloneCommand = `git clone --depth=1 --filter=blob:none --sparse --single-branch --no-tags ${branchParam} "${gitUrl}" "${outputDir}"`;
+    await executeCommand(cloneCommand, { outputTransform });
 
     // Step 2: If subPath is not specified, retrieve all files; otherwise, set up sparse-checkout for the specified subPath
     if (!subPath) {
-      await executeCommand('git sparse-checkout disable', outputDir);
+      await executeCommand('git sparse-checkout disable', { cwd: outputDir });
     } else {
       console.log('Configuring sparse-checkout...');
 
-      // Initialize sparse-checkout
-      await executeCommand('git sparse-checkout init --cone', outputDir);
-
-      // Set the specific path
-      await executeCommand(`git sparse-checkout set "${subPath}"`, outputDir);
+      await executeCommand('git sparse-checkout init --cone', { cwd: outputDir });
+      await executeCommand(`git sparse-checkout set "${subPath}"`, { cwd: outputDir, outputTransform });
 
       // Check if we should move contents up (when cloning subdirectory only)
       const subDirPath = path.join(outputDir, subPath);
