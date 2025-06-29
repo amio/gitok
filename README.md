@@ -2,10 +2,10 @@
 
 [![version][npm-badge]][npm-link] [![repo][github-src]][github-link]
 
-A CLI to download specific parts of Git repositories using sparse-checkout. Supports GitHub and GitLab urls.
+A CLI to download specific parts of Git repositories using sparse-checkout.
 
 - 10x faster than `gitpick`
-- Works with GitHub and GitLab urls
+- Supports GitHub and GitLab urls.
 
 [github-src]: https://badgen.net/badge/-/amio%2Fgitok/black?icon=github&label=
 [github-link]: https://github.com/amio/gitok
@@ -27,16 +27,12 @@ npx gitok <url>
 ### Basic Repository Clone
 
 ```bash
-# Clone entire repository (GitHub)
+# Clone entire repository (GitHub/GitLab)
 gitok https://github.com/owner/repo
-
-# Clone entire repository (GitLab)
 gitok https://gitlab.com/owner/repo
 
-# Clone specific folder from main branch (GitHub)
+# Clone specific folder from main branch (GitHub/GitLab)
 gitok https://github.com/owner/repo/tree/main/path/to/folder
-
-# Clone specific folder from main branch (GitLab)
 gitok https://gitlab.com/owner/repo/-/tree/main/path/to/folder
 
 # Clone specific folder from different branch
@@ -44,9 +40,34 @@ gitok https://github.com/owner/repo/tree/develop/src/components
 gitok https://gitlab.com/owner/repo/-/tree/develop/src/components
 ```
 
-### Custom Output Directory
+### Full Help
 
 ```bash
-# Specify custom output directory name
-gitok https://github.com/owner/repo/tree/main/examples custom-directory
+Usage: gitok [options] <url> [output]
+
+A CLI tool to quickly clone specific parts of git repositories
+
+Arguments:
+  url                    Git repository URL (GitHub or GitLab)
+  output                 Output directory name (optional)
+
+Options:
+  -V, --version          output the version number
+  -b, --branch <branch>  Branch to clone from
+  -v, --verbose          Show detailed output logs
+  -h, --help             display help for command
+
+Examples:
+  # Clone the entire repository
+  $ gitok https://github.com/user/repo
+
+  # Clone only a subdirectory from GitHub
+  $ gitok https://github.com/user/repo/tree/main/path/to/subdir
+
+  # Clone only a subdirectory from GitLab
+  $ gitok https://gitlab.com/group/project/-/tree/master/path/to/subdir
 ```
+
+## License
+
+MIT License © 2025 Amio
