@@ -1,4 +1,4 @@
-# `gitok` - the git take out
+# `gitok` - git take out
 
 [![version][npm-badge]][npm-link] [![repo][github-src]][github-link]
 
