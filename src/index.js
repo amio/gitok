@@ -1,9 +1,6 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
 import path from 'path';
 import fs from 'fs/promises';
-
-const execAsync = promisify(exec);
+import { dim, blue, cyan, green, yellow } from 'colorette';
 
 /**
  * Parse Git repository URL to extract repository info and subdirectory
@@ -158,18 +155,17 @@ async function removeDirectory(dirPath) {
  * @param {object} options - CLI options
  */
 async function gitok(url, options = {}) {
+  const startTime = Date.now();
   const { platform, host, owner, repo, branch, subPath, gitUrl, repoName } = parseGitUrl(url);
 
   // Determine output directory
   const outputDir = options.output || (subPath ? path.basename(subPath) : repoName);
 
-  // Use ANSI escape codes for color: cyan for repo, orange for branch, green for path
-  // Orange: \x1b[38;5;208m (256-color), Cyan: \x1b[36m, Green: \x1b[32m, Dim: \x1b[2m, Reset: \x1b[0m
-  // Light blue: \x1b[94m
-  let info = `\x1b[2mrepo:\x1b[0m\x1b[94m${owner}/${repo}\x1b[0m`;
-  if (branch) info += ` \x1b[2mbranch:\x1b[0m\x1b[38;5;208m${branch}\x1b[0m`;
-  if (subPath) info += ` \x1b[2mpath:\x1b[0m\x1b[32m${subPath}\x1b[0m`;
-  info += ` -> \x1b[36m./${outputDir}\x1b[0m`;
+  // Log repository information
+  let info = `${dim('repo:')}${blue(`${owner}/${repo}`)}`;
+  if (branch) info += ` ${dim('branch:')}${yellow(branch)}`;
+  if (subPath) info += ` ${dim('path:')}${green(subPath)}`;
+  info += ` -> ${cyan(`./${outputDir}`)}`;
   console.log(info);
 
   // Check if output directory already exists
@@ -224,7 +220,9 @@ async function gitok(url, options = {}) {
       await removeDirectory(gitDir);
     }
 
-    console.log(`Done: ${path.resolve(outputDir)}`);
+    const endTime = Date.now();
+    const duration = ((endTime - startTime) / 1000).toFixed(2);
+    console.log(`Done: ${path.resolve(outputDir)} (${duration}s)`);
 
   } catch (error) {
     // Clean up on error

@@ -26,6 +26,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "colorette": "^2.0.20",
     "commander": "^11.0.0",
     "node-pty": "^1.0.0"
   },
