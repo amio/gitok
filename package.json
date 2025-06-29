@@ -26,7 +26,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "commander": "^11.0.0"
+    "commander": "^11.0.0",
+    "node-pty": "^1.0.0"
   },
   "engines": {
     "node": ">=14.0.0"

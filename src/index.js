@@ -27,11 +27,11 @@ function parseGitUrl(url) {
 
   // Detect platform and parse accordingly
   let platform, host, owner, repo, branch, subPath;
-  
+
   // GitHub URL patterns
   const githubBasicMatch = url.match(/^https:\/\/github\.com\/([^\/]+)\/([^\/]+)(?:\.git)?$/);
   const githubTreeMatch = url.match(/^https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/tree\/([^\/]+)\/(.+)$/);
-  
+
   // GitLab URL patterns
   const gitlabBasicMatch = url.match(/^https:\/\/gitlab\.com\/([^\/]+)\/([^\/]+)(?:\.git)?$/);
   const gitlabTreeMatch = url.match(/^https:\/\/gitlab\.com\/([^\/]+)\/([^\/]+)\/-\/tree\/([^\/]+)\/(.+)$/);
@@ -72,30 +72,46 @@ function parseGitUrl(url) {
 }
 
 /**
- * Execute shell command with better error handling
+ * Execute shell command with TTY support for progress display
  * @param {string} command - Command to execute
  * @param {string} cwd - Working directory
  * @returns {Promise<string>} - Command output
  */
 async function executeCommand(command, cwd = process.cwd()) {
-  return new Promise((resolve, reject) => {
-    const child = exec(command, { cwd }, (error, stdout, stderr) => {
-      if (error) {
-        reject(new Error(`Command failed: ${command}\n${error.message}`));
-        return;
-      }
-      resolve(stdout);
-    });
+  return new Promise(async (resolve, reject) => {
+    try {
+      const pty = await import('node-pty');
 
-    // Real-time output of stdout
-    child.stdout.on('data', (data) => {
-      process.stdout.write(data);
-    });
+      const ptyProcess = pty.spawn('sh', ['-c', command], {
+        name: 'xterm-color',
+        cols: process.stdout.columns || 80,
+        rows: process.stdout.rows || 24,
+        cwd: cwd,
+        env: {
+          ...process.env,
+          TERM: 'xterm-256color',
+          FORCE_COLOR: '1'
+        }
+      });
 
-    // Real-time output of stderr
-    child.stderr.on('data', (data) => {
-      process.stderr.write(data);
-    });
+      let output = '';
+
+      ptyProcess.onData((data) => {
+        output += data;
+        process.stdout.write(data);
+      });
+
+      ptyProcess.onExit(({ exitCode, signal }) => {
+        if (exitCode === 0) {
+          resolve(output);
+        } else {
+          reject(new Error(`Command failed: ${command}\nExit code: ${exitCode}\nSignal: ${signal}`));
+        }
+      });
+
+    } catch (error) {
+      reject(new Error(`node-pty is required but not available: ${error.message}`));
+    }
   });
 }
 
@@ -154,7 +170,7 @@ async function gitok(url, options = {}) {
     // Step 1: Clone with sparse-checkout
     // console.log('Cloning with sparse-checkout...');
     const branchParam = branch ? ` -b "${branch}"` : '';
-    await executeCommand(`git clone --depth=1 --filter=blob:none --sparse --single-branch --no-tags${branchParam} "${gitUrl}" "${outputDir}"`);
+    await executeCommand(`git clone --depth=1 --filter=blob:none --sparse --single-branch --no-tags ${branchParam} "${gitUrl}" "${outputDir}"`);
 
     // Step 2: If subPath is not specified, retrieve all files; otherwise, set up sparse-checkout for the specified subPath
     if (!subPath) {
