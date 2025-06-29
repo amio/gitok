@@ -1,8 +1,11 @@
-# `gitok` - Git Take Out
+# `gitok` - the git take out
 
 [![version][npm-badge]][npm-link] [![repo][github-src]][github-link]
 
-🚀 A fast CLI tool to clone specific parts of Git repositories using sparse-checkout. Supports both GitHub and GitLab.
+A CLI to download specific parts of Git repositories using sparse-checkout. Supports GitHub and GitLab urls.
+
+- 10x faster than `gitpick`
+- Works with GitHub and GitLab urls
 
 [github-src]: https://badgen.net/badge/-/amio%2Fgitok/black?icon=github&label=
 [github-link]: https://github.com/amio/gitok

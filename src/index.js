@@ -191,10 +191,13 @@ async function gitok(url, options = {}) {
   // Determine output directory
   const outputDir = options.output || (subPath ? path.basename(subPath) : repoName);
 
+  // Determine whether to show only last line based on verbose option
+  const showOnlyLastLine = !options.verbose;
+
   // Log repository information
-  let info = `${dim('repo:')}${blue(`${owner}/${repo}`)}`;
-  if (branch) info += ` ${dim('branch:')}${yellow(branch)}`;
-  if (subPath) info += ` ${dim('path:')}${green(subPath)}`;
+  let info = `${('repo:')}${blue(`${owner}/${repo}`)}`;
+  if (subPath) info += ` ${('path:')}${blue(subPath)}`;
+  if (branch) info += ` ${('branch:')}${yellow(branch)}`;
   info += ` -> ${cyan(`./${outputDir}`)}`;
   console.log(info);
 
@@ -207,7 +210,7 @@ async function gitok(url, options = {}) {
     // Step 1: Clone with sparse-checkout
     const branchParam = branch ? ` -b "${branch}"` : '';
     const cloneCommand = `git clone --depth=1 --filter=blob:none --sparse --single-branch --no-tags ${branchParam} "${gitUrl}" "${outputDir}"`;
-    await executeCommand(cloneCommand, { showOnlyLastLine: true });
+    await executeCommand(cloneCommand, { showOnlyLastLine });
 
     // Step 2: If subPath is not specified, retrieve all files; otherwise, set up sparse-checkout for the specified subPath
     if (!subPath) {
@@ -215,7 +218,7 @@ async function gitok(url, options = {}) {
     } else {
       // console.log('Configuring sparse-checkout...');
       await executeCommand('git sparse-checkout init --cone', { cwd: outputDir });
-      await executeCommand(`git sparse-checkout set "${subPath}"`, { cwd: outputDir, showOnlyLastLine: true });
+      await executeCommand(`git sparse-checkout set "${subPath}"`, { cwd: outputDir, showOnlyLastLine });
 
       // Check if we should move contents up (when cloning subdirectory only)
       const subDirPath = path.join(outputDir, subPath);
@@ -246,7 +249,7 @@ async function gitok(url, options = {}) {
 
     const endTime = Date.now();
     const duration = ((endTime - startTime) / 1000).toFixed(2);
-    console.log(`Done: ${path.resolve(outputDir)} (${duration}s)`);
+    console.log(`done. ${path.resolve(outputDir)} (${duration}s)`);
 
   } catch (error) {
     // Clean up on error

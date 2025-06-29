@@ -37,11 +37,13 @@ program
   .argument('<url>', 'Git repository URL (GitHub or GitLab)')
   .argument('[output]', 'Output directory name (optional)')
   .option('-b, --branch <branch>', 'Branch to clone from')
+  .option('-v, --verbose', 'Show detailed output logs')
   .action(async (url, output, options) => {
     try {
       await gitok(url, {
         output,
-        branch: options.branch
+        branch: options.branch,
+        verbose: options.verbose,
       });
     } catch (error) {
       console.error('Error:', error.message);
