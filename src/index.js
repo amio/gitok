@@ -82,7 +82,6 @@ function parseGitUrl(url) {
  */
 async function executeCommand(command, options = {}) {
   const { cwd = process.cwd(), outputTransform, showOnlyLastLine = false } = options;
-  const disablePty = process.env.GITOK_DISABLE_PTY === '1';
 
   let output = '';
   let hasDisplayedLine = false;
@@ -128,28 +127,6 @@ async function executeCommand(command, options = {}) {
     FORCE_COLOR: '1'
   };
 
-  let ptyProcess;
-  let ptyError;
-  if (!disablePty) {
-    try {
-      const pty = await import('node-pty');
-      ptyProcess = pty.spawn('sh', ['-c', command], {
-        name: 'xterm-color',
-        cols: process.stdout.columns || 80,
-        rows: process.stdout.rows || 24,
-        cwd: cwd,
-        env
-      });
-      ptyProcess.onData(handleOutput);
-    } catch (error) {
-      ptyError = error;
-      ptyProcess = null;
-    }
-  }
-  if (!disablePty && !ptyProcess && ptyError && process.env.GITOK_DEBUG === '1') {
-    console.warn('Warning: node-pty unavailable, falling back to standard process:', ptyError.message);
-  }
-
   return new Promise((resolve, reject) => {
     const finalize = (exitCode, signal) => {
       // If using showOnlyLastLine mode, clear the displayed line when done
@@ -163,13 +140,6 @@ async function executeCommand(command, options = {}) {
         reject(new Error(`Command failed: ${command}\nExit code: ${exitCode}\nSignal: ${signal}`));
       }
     };
-
-    if (ptyProcess) {
-      ptyProcess.onExit(({ exitCode, signal }) => {
-        finalize(exitCode, signal);
-      });
-      return;
-    }
 
     const childProcess = spawn('sh', ['-c', command], {
       cwd: cwd,
