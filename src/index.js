@@ -45,7 +45,8 @@ function parseGitUrl(url) {
   } else if (githubTreeBranchMatch) {
     platform = 'github';
     host = 'github.com';
-    [, owner, repo, branch, subPath] = [githubTreeBranchMatch[0], githubTreeBranchMatch[1], githubTreeBranchMatch[2], githubTreeBranchMatch[3], ''];
+    [, owner, repo, branch] = githubTreeBranchMatch;
+    subPath = '';
   } else if (gitlabBasicMatch) {
     platform = 'gitlab';
     host = 'gitlab.com';
