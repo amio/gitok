@@ -5,7 +5,7 @@
 A CLI to download specific parts of Git repositories using sparse-checkout.
 
 - 10x faster than `gitpick`
-- Supports GitHub and GitLab urls.
+- Supports GitHub and GitLab URLs.
 
 [github-src]: https://badgen.net/badge/-/amio%2Fgitok/black?icon=github&label=
 [github-link]: https://github.com/amio/gitok
@@ -24,21 +24,21 @@ npx gitok <url>
 
 ## Usage
 
-### Basic Repository Clone
+### Basic Repository Download
 
 ```bash
-# Clone entire repository (GitHub/GitLab)
+# Download entire repository (GitHub/GitLab)
 gitok https://github.com/owner/repo
 gitok https://gitlab.com/owner/repo
 
-# Clone entire repository from a specific branch (GitHub)
+# Download entire repository from a specific branch (GitHub)
 gitok https://github.com/owner/repo/tree/v1.1.0
 
-# Clone specific folder from main branch (GitHub/GitLab)
+# Download specific folder from main branch (GitHub/GitLab)
 gitok https://github.com/owner/repo/tree/main/path/to/folder
 gitok https://gitlab.com/owner/repo/-/tree/main/path/to/folder
 
-# Clone specific folder from different branch
+# Download specific folder from different branch
 gitok https://github.com/owner/repo/tree/develop/src/components
 gitok https://gitlab.com/owner/repo/-/tree/develop/src/components
 ```
@@ -48,7 +48,7 @@ gitok https://gitlab.com/owner/repo/-/tree/develop/src/components
 ```bash
 Usage: gitok [options] <url> [output]
 
-A CLI tool to quickly clone specific parts of git repositories
+A CLI tool to quickly download specific parts of git repositories
 
 Arguments:
   url                    Git repository URL (GitHub or GitLab)
@@ -56,18 +56,18 @@ Arguments:
 
 Options:
   -V, --version          output the version number
-  -b, --branch <branch>  Branch to clone from
+  -b, --branch <branch>  Branch to download from
   -v, --verbose          Show detailed output logs
   -h, --help             display help for command
 
 Examples:
-  # Clone the entire repository
+  # Download the entire repository
   $ gitok https://github.com/user/repo
 
-  # Clone only a subdirectory from GitHub
+  # Download only a subdirectory from GitHub
   $ gitok https://github.com/user/repo/tree/main/path/to/subdir
 
-  # Clone only a subdirectory from GitLab
+  # Download only a subdirectory from GitLab
   $ gitok https://gitlab.com/group/project/-/tree/master/path/to/subdir
 ```
 

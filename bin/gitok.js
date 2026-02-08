@@ -18,25 +18,25 @@ const program = new Command();
 
 program
   .name('gitok')
-  .description('A CLI tool to quickly clone specific parts of git repositories')
+  .description('A CLI tool to quickly download specific parts of git repositories')
   .version(packageJson.version);
 
 program.addHelpText('after', `
 Examples:
-  # Clone the entire repository
+  # Download the entire repository
   $ gitok https://github.com/user/repo
 
-  # Clone only a subdirectory from GitHub
+  # Download only a subdirectory from GitHub
   $ gitok https://github.com/user/repo/tree/main/path/to/subdir
 
-  # Clone only a subdirectory from GitLab
+  # Download only a subdirectory from GitLab
   $ gitok https://gitlab.com/group/project/-/tree/master/path/to/subdir
 `);
 
 program
   .argument('<url>', 'Git repository URL (GitHub or GitLab)')
   .argument('[output]', 'Output directory name (optional)')
-  .option('-b, --branch <branch>', 'Branch to clone from')
+  .option('-b, --branch <branch>', 'Branch to download from')
   .option('-v, --verbose', 'Show detailed output logs')
   .action(async (url, output, options) => {
     try {
