@@ -53,8 +53,9 @@ function parseGitUrl(url) {
     throw new Error('Invalid Git URL format. Expected: https://github.com/owner/repo, https://gitlab.com/owner/repo, or their respective tree/blob URLs');
   }
 
-  // Remove .git suffix if present
   subPath = subPath || '';
+
+  // Remove .git suffix if present
   const repoName = repo.replace(/\.git$/, '');
 
   return {
