@@ -54,6 +54,7 @@ function parseGitUrl(url) {
   }
 
   // Remove .git suffix if present
+  subPath = subPath || '';
   const repoName = repo.replace(/\.git$/, '');
 
   return {
@@ -62,7 +63,7 @@ function parseGitUrl(url) {
     owner,
     repo: repoName,
     branch: branch || null,
-    subPath: subPath || '',
+    subPath,
     gitUrl: `https://${host}/${owner}/${repoName}.git`,
     repoName
   };
