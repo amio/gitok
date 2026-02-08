@@ -129,6 +129,7 @@ async function executeCommand(command, options = {}) {
   };
 
   let ptyProcess;
+  let ptyError;
   if (!disablePty) {
     try {
       const pty = await import('node-pty');
@@ -140,9 +141,13 @@ async function executeCommand(command, options = {}) {
         env
       });
       ptyProcess.onData(handleOutput);
-    } catch {
+    } catch (error) {
+      ptyError = error;
       ptyProcess = null;
     }
+  }
+  if (!disablePty && !ptyProcess && ptyError && process.env.GITOK_DEBUG === '1') {
+    console.warn('Warning: node-pty unavailable, falling back to standard process:', ptyError.message);
   }
 
   return new Promise((resolve, reject) => {
