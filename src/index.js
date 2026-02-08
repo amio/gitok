@@ -41,7 +41,7 @@ function parseGitUrl(url) {
   } else if (githubTreeMatch) {
     platform = 'github';
     host = 'github.com';
-    [, owner, repo, branch, subPath] = [githubTreeMatch[0], githubTreeMatch[1], githubTreeMatch[2], githubTreeMatch[3], githubTreeMatch[4]];
+    [, owner, repo, branch, subPath] = githubTreeMatch;
   } else if (githubTreeBranchMatch) {
     platform = 'github';
     host = 'github.com';
