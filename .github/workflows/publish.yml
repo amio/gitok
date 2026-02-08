@@ -2,8 +2,8 @@ name: Publish Package
 
 on:
   push:
-    branches:
-      - main
+    # branches:
+    #   - main
     tags:
       - 'v*' # Trigger on version tags, e.g., v1.0.0
 
@@ -19,29 +19,10 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
-          registry-url: 'https://registry.npmjs.org' # Specifies the npm registry
+          # registry-url: 'https://registry.npmjs.org' # Specifies the npm registry
       - run: npm ci
       - run: npm run build --if-present
       - run: npm test
-      - run: unset NODE_AUTH_TOKEN; unset NPM_TOKEN # Unset the default token set by "actions/setup-node" to get OIDC publishing working
-      - run: npm publish # The npm CLI automatically uses the OIDC token
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          name: Release v${{ steps.version.outputs.version }}
-          body: |
-            ## Release v${{ steps.version.outputs.version }}
-
-            🎉 This version has been automatically published to NPM!
-
-            📦 **NPM Package**: https://www.npmjs.com/package/hyper-marked/v/${{ steps.version.outputs.version }}
-
-            ### Installation
-            ```bash
-            npm install hyper-marked@${{ steps.version.outputs.version }}
-            ```
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: rm -f .npmrc ~/.npmrc # Ensure no existing npm tokens interfere
+      - run: unset NODE_AUTH_TOKEN; unset NPM_TOKEN; # Unset the default token set by "actions/setup-node" to get OIDC publishing working
+      - run: npm publish --loglevel silly # The npm CLI automatically uses the OIDC token

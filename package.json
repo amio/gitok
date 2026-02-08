@@ -2,6 +2,10 @@
   "name": "gitok",
   "version": "1.2.0",
   "description": "A CLI tool to quickly clone specific parts of git repositories (supports GitHub and GitLab)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amio/gitok.git"
+  },
   "main": "src/index.js",
   "type": "module",
   "bin": {
