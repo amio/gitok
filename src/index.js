@@ -28,6 +28,7 @@ function parseGitUrl(url) {
   // GitHub URL patterns
   const githubBasicMatch = url.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)(?:\.git)?$/);
   const githubTreeMatch = url.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/tree\/([^/]+)\/(.+)$/);
+  const githubTreeBranchMatch = url.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/tree\/([^/]+)$/);
 
   // GitLab URL patterns
   const gitlabBasicMatch = url.match(/^https:\/\/gitlab\.com\/([^/]+)\/([^/]+)(?:\.git)?$/);
@@ -41,6 +42,10 @@ function parseGitUrl(url) {
     platform = 'github';
     host = 'github.com';
     [, owner, repo, branch, subPath] = [githubTreeMatch[0], githubTreeMatch[1], githubTreeMatch[2], githubTreeMatch[3], githubTreeMatch[4]];
+  } else if (githubTreeBranchMatch) {
+    platform = 'github';
+    host = 'github.com';
+    [, owner, repo, branch, subPath] = [githubTreeBranchMatch[0], githubTreeBranchMatch[1], githubTreeBranchMatch[2], githubTreeBranchMatch[3], ''];
   } else if (gitlabBasicMatch) {
     platform = 'gitlab';
     host = 'gitlab.com';

@@ -49,6 +49,20 @@ test('URL Parser Tests', async (t) => {
     assert.strictEqual(result.repoName, 'awesome');
   });
 
+  await t.test('should parse GitHub repository URL with branch only', () => {
+    const url = 'https://github.com/amio/gitok/tree/v1.1.0';
+    const result = testModule(url);
+
+    assert.strictEqual(result.platform, 'github');
+    assert.strictEqual(result.host, 'github.com');
+    assert.strictEqual(result.owner, 'amio');
+    assert.strictEqual(result.repo, 'gitok');
+    assert.strictEqual(result.branch, 'v1.1.0');
+    assert.strictEqual(result.subPath, '');
+    assert.strictEqual(result.gitUrl, 'https://github.com/amio/gitok.git');
+    assert.strictEqual(result.repoName, 'gitok');
+  });
+
   await t.test('should parse repository URL with .git extension', () => {
     const url = 'https://github.com/owner/repo.git';
     const result = testModule(url);
