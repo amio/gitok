@@ -1,58 +1,30 @@
-name: Publish to NPM
+name: Publish Package
 
 on:
   push:
+    branches:
+      - main
     tags:
-      - 'v*'
+      - 'v*' # Trigger on version tags, e.g., v1.0.0
+
+permissions:
+  id-token: write # Required for OIDC
+  contents: read # Allows checking out the repository code
 
 jobs:
   publish:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      id-token: write
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '24'
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run tests
-        run: npm test
-
-      - name: Extract version from tag
-        id: version
-        run: |
-          TAG=${GITHUB_REF#refs/tags/v}
-          echo "version=$TAG" >> $GITHUB_OUTPUT
-          echo "Version: $TAG"
-
-      # - name: Update package.json version
-      #   run: |
-      #     npm version ${{ steps.version.outputs.version }} --no-git-tag-version
-
-      - name: Verify version matches tag
-        run: |
-          PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          TAG_VERSION=${{ steps.version.outputs.version }}
-          if [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
-            echo "Error: Package version ($PACKAGE_VERSION) doesn't match tag version ($TAG_VERSION)"
-            exit 1
-          fi
-          echo "Version verification passed: $PACKAGE_VERSION"
-
-      - name: Publish to NPM
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          registry-url: 'https://registry.npmjs.org' # Specifies the npm registry
+      - run: npm ci
+      - run: npm run build --if-present
+      - run: npm test
+      - run: unset NODE_AUTH_TOKEN; unset NPM_TOKEN # Unset the default token set by "actions/setup-node" to get OIDC publishing working
+      - run: npm publish # The npm CLI automatically uses the OIDC token
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
