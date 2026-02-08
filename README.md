@@ -31,6 +31,9 @@ npx gitok <url>
 gitok https://github.com/owner/repo
 gitok https://gitlab.com/owner/repo
 
+# Clone entire repository from a specific branch (GitHub)
+gitok https://github.com/owner/repo/tree/v1.1.0
+
 # Clone specific folder from main branch (GitHub/GitLab)
 gitok https://github.com/owner/repo/tree/main/path/to/folder
 gitok https://gitlab.com/owner/repo/-/tree/main/path/to/folder

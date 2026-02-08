@@ -27,7 +27,7 @@ function parseGitUrl(url) {
 
   // GitHub URL patterns
   const githubBasicMatch = url.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)(?:\.git)?$/);
-  const githubTreeMatch = url.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/tree\/([^/]+)\/(.+)$/);
+  const githubTreeMatch = url.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/tree\/([^/]+)(?:\/(.+))?$/);
 
   // GitLab URL patterns
   const gitlabBasicMatch = url.match(/^https:\/\/gitlab\.com\/([^/]+)\/([^/]+)(?:\.git)?$/);
@@ -40,7 +40,7 @@ function parseGitUrl(url) {
   } else if (githubTreeMatch) {
     platform = 'github';
     host = 'github.com';
-    [, owner, repo, branch, subPath] = [githubTreeMatch[0], githubTreeMatch[1], githubTreeMatch[2], githubTreeMatch[3], githubTreeMatch[4]];
+    [, owner, repo, branch, subPath] = githubTreeMatch;
   } else if (gitlabBasicMatch) {
     platform = 'gitlab';
     host = 'gitlab.com';
@@ -53,6 +53,8 @@ function parseGitUrl(url) {
     throw new Error('Invalid Git URL format. Expected: https://github.com/owner/repo, https://gitlab.com/owner/repo, or their respective tree/blob URLs');
   }
 
+  subPath = subPath || '';
+
   // Remove .git suffix if present
   const repoName = repo.replace(/\.git$/, '');
 
@@ -62,7 +64,7 @@ function parseGitUrl(url) {
     owner,
     repo: repoName,
     branch: branch || null,
-    subPath: subPath || '',
+    subPath,
     gitUrl: `https://${host}/${owner}/${repoName}.git`,
     repoName
   };
