@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { spawn } from 'node:child_process';
 import { blue, cyan, yellow } from 'colorette';
 
 /**
@@ -81,30 +82,17 @@ function parseGitUrl(url) {
  */
 async function executeCommand(command, options = {}) {
   const { cwd = process.cwd(), outputTransform, showOnlyLastLine = false } = options;
-
-  const pty = await import('node-pty');
-
-  const ptyProcess = pty.spawn('sh', ['-c', command], {
-    name: 'xterm-color',
-    cols: process.stdout.columns || 80,
-    rows: process.stdout.rows || 24,
-    cwd: cwd,
-    env: {
-      ...process.env,
-      TERM: 'xterm-256color',
-      FORCE_COLOR: '1'
-    }
-  });
+  const disablePty = process.env.GITOK_DISABLE_PTY === '1';
 
   let output = '';
   let hasDisplayedLine = false;
-
-  ptyProcess.onData((data) => {
-    output += data;
+  const handleOutput = (data) => {
+    const text = data.toString();
+    output += text;
 
     if (showOnlyLastLine) {
       // Handle logic for showing only the last line
-      const lines = data.split('\n').filter(line => line.trim() !== '');
+      const lines = text.split('\n').filter(line => line.trim() !== '');
 
       if (lines.length > 0) {
         // If we previously displayed a line, clear it first
@@ -125,17 +113,40 @@ async function executeCommand(command, options = {}) {
       }
     } else {
       // Original output processing logic
-      const processedData = outputTransform ? outputTransform(data) : data;
+      const processedData = outputTransform ? outputTransform(text) : text;
 
       // Only output if the result is not null/undefined
       if (processedData != null) {
         process.stdout.write(processedData);
       }
     }
-  });
+  };
+
+  const env = {
+    ...process.env,
+    TERM: 'xterm-256color',
+    FORCE_COLOR: '1'
+  };
+
+  let ptyProcess;
+  if (!disablePty) {
+    try {
+      const pty = await import('node-pty');
+      ptyProcess = pty.spawn('sh', ['-c', command], {
+        name: 'xterm-color',
+        cols: process.stdout.columns || 80,
+        rows: process.stdout.rows || 24,
+        cwd: cwd,
+        env
+      });
+      ptyProcess.onData(handleOutput);
+    } catch {
+      ptyProcess = null;
+    }
+  }
 
   return new Promise((resolve, reject) => {
-    ptyProcess.onExit(({ exitCode, signal }) => {
+    const finalize = (exitCode, signal) => {
       // If using showOnlyLastLine mode, clear the displayed line when done
       if (showOnlyLastLine && hasDisplayedLine) {
         process.stdout.write('\r\x1b[2K'); // Clear current line
@@ -146,6 +157,26 @@ async function executeCommand(command, options = {}) {
       } else {
         reject(new Error(`Command failed: ${command}\nExit code: ${exitCode}\nSignal: ${signal}`));
       }
+    };
+
+    if (ptyProcess) {
+      ptyProcess.onExit(({ exitCode, signal }) => {
+        finalize(exitCode, signal);
+      });
+      return;
+    }
+
+    const childProcess = spawn('sh', ['-c', command], {
+      cwd: cwd,
+      env,
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+
+    childProcess.stdout.on('data', handleOutput);
+    childProcess.stderr.on('data', handleOutput);
+    childProcess.on('error', reject);
+    childProcess.on('close', (exitCode, signal) => {
+      finalize(exitCode, signal);
     });
   });
 }
@@ -257,4 +288,5 @@ async function gitok(url, options = {}) {
   }
 }
 
+export { executeCommand };
 export default gitok;
